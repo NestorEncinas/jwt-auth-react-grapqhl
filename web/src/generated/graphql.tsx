@@ -14,11 +14,13 @@ export type Scalars = {
 export type Login = {
    __typename?: 'Login',
   accessToken: Scalars['String'],
+  user: User,
 };
 
 export type Mutation = {
    __typename?: 'Mutation',
   revokeRefreshToken: Scalars['Boolean'],
+  logout: Scalars['Boolean'],
   login: Login,
   register: Scalars['Boolean'],
 };
@@ -43,8 +45,9 @@ export type MutationRegisterArgs = {
 export type Query = {
    __typename?: 'Query',
   hello: Scalars['String'],
-  bye: Scalars['String'],
+  me?: Maybe<User>,
   users: Array<User>,
+  bye: Scalars['String'],
 };
 
 export type User = {
@@ -79,7 +82,30 @@ export type LoginMutation = (
   & { login: (
     { __typename?: 'Login' }
     & Pick<Login, 'accessToken'>
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'email'>
+    ) }
   ) }
+);
+
+export type LogoutMutationVariables = {};
+
+
+export type LogoutMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'logout'>
+);
+
+export type MeQueryVariables = {};
+
+
+export type MeQuery = (
+  { __typename?: 'Query' }
+  & { me: Maybe<(
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'email'>
+  )> }
 );
 
 export type RegisterMutationVariables = {
@@ -138,6 +164,10 @@ export const LoginDocument = gql`
     mutation Login($email: String!, $password: String!) {
   login(email: $email, password: $password) {
     accessToken
+    user {
+      id
+      email
+    }
   }
 }
     `;
@@ -149,6 +179,37 @@ export type LoginMutationFn = ApolloReactCommon.MutationFunction<LoginMutation, 
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = ApolloReactCommon.MutationResult<LoginMutation>;
 export type LoginMutationOptions = ApolloReactCommon.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const LogoutDocument = gql`
+    mutation Logout {
+  logout
+}
+    `;
+export type LogoutMutationFn = ApolloReactCommon.MutationFunction<LogoutMutation, LogoutMutationVariables>;
+
+    export function useLogoutMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<LogoutMutation, LogoutMutationVariables>) {
+      return ApolloReactHooks.useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument, baseOptions);
+    }
+export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
+export type LogoutMutationResult = ApolloReactCommon.MutationResult<LogoutMutation>;
+export type LogoutMutationOptions = ApolloReactCommon.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
+export const MeDocument = gql`
+    query Me {
+  me {
+    id
+    email
+  }
+}
+    `;
+
+    export function useMeQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MeQuery, MeQueryVariables>) {
+      return ApolloReactHooks.useQuery<MeQuery, MeQueryVariables>(MeDocument, baseOptions);
+    }
+      export function useMeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MeQuery, MeQueryVariables>) {
+        return ApolloReactHooks.useLazyQuery<MeQuery, MeQueryVariables>(MeDocument, baseOptions);
+      }
+      
+export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
+export type MeQueryResult = ApolloReactCommon.QueryResult<MeQuery, MeQueryVariables>;
 export const RegisterDocument = gql`
     mutation Register($email: String!, $password: String!) {
   register(email: $email, password: $password)

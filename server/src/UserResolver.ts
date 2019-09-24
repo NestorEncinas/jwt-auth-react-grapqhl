@@ -15,11 +15,16 @@ import { MyContext } from "./MyContext";
 import { createRefreshToken, createAccessToken } from "./authorization";
 import { isAuthorization } from "./isAuthorization";
 import { getConnection } from "typeorm";
+import { verify } from "jsonwebtoken";
+import { sendRefreshToken } from "./sendRefreshToken";
 
 @ObjectType()
 class Login {
   @Field()
   accessToken: string;
+
+  @Field(() => User)
+  user: User;
 }
 
 @Resolver()
@@ -29,13 +34,23 @@ export class UserResolver {
     return "hi!";
   }
 
-  // auth
-  @Query(() => String)
-  @UseMiddleware(isAuthorization)
-  bye(@Ctx() { validateData }: MyContext) {
-    console.log("BYEEEEEEE", validateData);
+  @Query(() => User, { nullable: true })
+  me(@Ctx() context: MyContext) {
+    const authorization = context.req.headers["authorization"];
 
-    return `User Id is: ${validateData!.userId}`;
+    if (!authorization) {
+      return null;
+    }
+
+    try {
+      const token = authorization.replace("Bearer ", "");
+      const validateData: any = verify(token, process.env.JWT_SECRET!);
+
+      return User.findOne(validateData.userId);
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
   }
 
   @Query(() => [User])
@@ -43,11 +58,26 @@ export class UserResolver {
     return User.find();
   }
 
+  // auth - TEST PURPOSES
+  @Query(() => String)
+  @UseMiddleware(isAuthorization)
+  bye(@Ctx() { validateData }: MyContext) {
+    return `User Id is: ${validateData!.userId}`;
+  }
+
+  // auth - TEST PURPOSES
   @Mutation(() => Boolean)
   async revokeRefreshToken(@Arg("userId") userId: number) {
     await getConnection()
       .getRepository(User)
       .increment({ id: userId }, "tokenCount", 1);
+
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async logout(@Ctx() { res }: MyContext) {
+    sendRefreshToken(res, "");
 
     return true;
   }
@@ -72,17 +102,13 @@ export class UserResolver {
 
     // add the refresh token as cookie
     // better way???
-    res.cookie(
-      "gid",
-      createRefreshToken(user),
-      // cannot be access by JS
-      { httpOnly: true }
-    );
+    sendRefreshToken(res, createRefreshToken(user));
 
     // access token should have short expiration date
     // NOTE: not too short, like 2', then u think ur app is not working because of that bs :smiley_face:
     return {
-      accessToken: createAccessToken(user)
+      accessToken: createAccessToken(user),
+      user
     };
   }
 

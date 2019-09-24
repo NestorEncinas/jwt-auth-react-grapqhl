@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import { verify } from "jsonwebtoken";
 import { User } from "./entity/User";
 import { createAccessToken, createRefreshToken } from "./authorization";
+import { sendRefreshToken } from "./sendRefreshToken";
 
 (async () => {
   const app = express();
@@ -54,12 +55,7 @@ import { createAccessToken, createRefreshToken } from "./authorization";
       return res.send({ ok: false, accessToken: "" });
     }
 
-    res.cookie(
-      "gid",
-      createRefreshToken(user),
-      // cannot be access by JS
-      { httpOnly: true }
-    );
+    sendRefreshToken(res, createRefreshToken(user));
 
     return res.send({ ok: true, accessToken: createAccessToken(user) });
   });
