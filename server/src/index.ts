@@ -1,6 +1,7 @@
 import "dotenv/config";
 import "reflect-metadata";
 import express from "express";
+import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { UserResolver } from "./UserResolver";
@@ -12,6 +13,14 @@ import { createAccessToken, createRefreshToken } from "./authorization";
 
 (async () => {
   const app = express();
+
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true
+    })
+  );
+
   app.use(cookieParser());
 
   // check if express is working
@@ -67,7 +76,8 @@ import { createAccessToken, createRefreshToken } from "./authorization";
     })
   });
 
-  server.applyMiddleware({ app });
+  server.applyMiddleware({ app, cors: false });
+
   app.listen(4000, () => {
     console.log("Apollo Server on http://localhost:4000/graphql");
   });
