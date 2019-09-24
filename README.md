@@ -9,4 +9,4 @@ Jwt authentication with React &amp; GraphQL
 	TypeORM
 	MySQL
 	React
-	
+	Apollo
